@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Список пользователей</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Список всех пользователей</h1>
+        <a href="/">← На главную</a>
+
+        <div class="users-grid">
+            {% for user in users %}
+            <div class="user-card">
+                <h3><a href="{{ url_for('user_profile', user_id=user.id) }}">Пользователь {{ user.id }}</a></h3>
+                <p>Логин: {{ user.username }}</p>
+                <p>Email: {{ user.email }}</p>
+                
+                {% if user.voted_for %}
+                    {% set candidate = Candidate.query.get(user.voted_for) %}
+                    <p>Голос: {{ candidate.name }}</p>
+                {% else %}
+                    <p>Голос: Не голосовал</p>
+                {% endif %}
+                
+                <a href="{{ url_for('user_profile', user_id=user.id) }}" class="profile-link">Перейти к профилю</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

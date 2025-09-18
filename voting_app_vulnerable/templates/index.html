@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Выборы руководителя</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Выборы руководителя отдела</h1>
+        <p>Добро пожаловать, {{ user.username }}! <a href="/logout">Выйти</a></p>
+
+        <div class="profile-links">
+            <a href="{{ url_for('user_profile', user_id=user.id) }}">Мой профиль</a>
+            <a href="{{ url_for('users_list') }}">Все пользователи</a>
+        </div>
+
+        <h2>Кандидаты:</h2>
+        <div class="candidates">
+            {% for candidate in candidates %}
+            <div class="candidate">
+                <h3><a href="{{ url_for('candidate_profile', candidate_id=candidate.id) }}">{{ candidate.name }}</a></h3>
+                <p>Голосов: {{ candidate.votes }}/10</p>
+                {% if user.voted_for == candidate.id %}
+                    <p class="voted">✓ Вы проголосовали за этого кандидата</p>
+                {% else %}
+                    <form action="/vote/{{ candidate.id }}" method="POST">
+                        <button type="submit">Голосовать</button>
+                    </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="exploit-hint">
+            <h3>Как эксплуатировать уязвимость:</h3>
+            <ol>
+                <li>Перейдите в <a href="{{ url_for('users_list') }}">список всех пользователей</a></li>
+                <li>Выберите любого пользователя и перейдите в его профиль</li>
+                <li>Нажмите "Передать голос этого пользователя Ивану Петрову"</li>
+                <li>Повторите для других пользователей</li>
+                <li>Когда Иван наберет 10 голосов, флаг появится в его <a href="{{ url_for('candidate_profile', candidate_id=1) }}">профиле</a></li>
+            </ol>
+
+            <div class="current-stats">
+                <h4>Текущая статистика:</h4>
+                <p>• Иван Петров: {{ candidates[0].votes }} голосов</p>
+                <p>• Мария Сидорова: {{ candidates[1].votes }} голосов</p>
+                <p>• Петр Иванов: {{ candidates[2].votes }} голосов</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

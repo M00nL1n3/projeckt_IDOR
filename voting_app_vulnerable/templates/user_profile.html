@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Профиль пользователя</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Профиль пользователя</h1>
+        <a href="/">← На главную</a>
+
+        <div class="profile-info">
+            <h2>{{ user.username }}</h2>
+            <p>Email: {{ user.email }}</p>
+            <p>ID пользователя: {{ user.id }}</p>
+            
+            {% if user.voted_for %}
+                {% set candidate = Candidate.query.get(user.voted_for) %}
+                <p>Проголосовал за: <a href="{{ url_for('candidate_profile', candidate_id=user.voted_for) }}">{{ candidate.name }}</a></p>
+                <p>Время голосования: {{ user.vote_timestamp }}</p>
+            {% else %}
+                <p>Еще не голосовал</p>
+            {% endif %}
+        </div>
+
+        <!-- УЯЗВИМОСТЬ: Эти действия доступны для ЛЮБОГО пользователя -->
+        <div class="admin-actions">
+            <h3>Управление голосом:</h3>
+            
+            {% if user.voted_for %}
+            <form action="{{ url_for('cancel_vote', user_id=user.id) }}" method="POST">
+                <button type="submit">Отменить голос этого пользователя</button>
+            </form>
+            {% endif %}
+            
+            <form action="{{ url_for('transfer_vote', user_id=user.id) }}" method="POST">
+                <button type="submit">Передать голос этого пользователя Ивану Петрову</button>
+            </form>
+        </div>
+
+        <div class="navigation">
+            <h3>Перейти к другим пользователям:</h3>
+            {% for other_user in User.query.all() %}
+                {% if other_user.id != user.id %}
+                <a href="{{ url_for('user_profile', user_id=other_user.id) }}">Пользователь {{ other_user.id }}: {{ other_user.username }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

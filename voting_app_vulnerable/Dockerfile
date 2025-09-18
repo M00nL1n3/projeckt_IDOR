@@ -1,0 +1,19 @@
+FROM python:3.11-slim-bookworm
+
+WORKDIR /app
+
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app/ .
+COPY templates/ ./templates/
+COPY static/ ./static/
+
+RUN mkdir -p instance
+
+EXPOSE 5000
+
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=development
+
+CMD ["python", "app.py"]

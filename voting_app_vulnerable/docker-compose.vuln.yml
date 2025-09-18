@@ -1,0 +1,10 @@
+services:
+  voting-vulnerable:
+    build: .
+    container_name: voting_vulnerable_app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./instance:/app/instance
+    environment:
+      - FLASK_ENV=development

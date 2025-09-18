@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Вход - Выборы руководителя</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Вход в систему</h1>
+        
+        <form method="POST" class="auth-form">
+            <div>
+                <label>Логин:</label>
+                <input type="text" name="username" required>
+            </div>
+            <div>
+                <label>Пароль:</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit">Войти</button>
+        </form>
+
+        <p>Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+        
+        <div class="hint">
+            <h3>Тестовый пользователь:</h3>
+            <p>Логин: <strong>test_user</strong></p>
+            <p>Пароль: <strong>test123</strong></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Профиль кандидата</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Профиль кандидата</h1>
+        <a href="/">← На главную</a>
+
+        <div class="profile-info">
+            <h2>{{ candidate.name }}</h2>
+            <p>Email: {{ candidate.email }}</p>
+            <p>Голосов: {{ candidate.votes }}/10</p>
+            
+            {% if candidate.votes >= 10 %}
+            <div class="winner">
+                <h3>🎉 ПОБЕДИТЕЛЬ! 🎉</h3>
+                <p>Флаг в поле email выше!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="voters-list">
+            <h3>Проголосовали за этого кандидата:</h3>
+            <ul>
+                {% for voter in voters %}
+                <li>
+                    <a href="{{ url_for('user_profile', user_id=voter.id) }}">
+                        Пользователь {{ voter.id }}: {{ voter.username }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="navigation">
+            <h3>Другие кандидаты:</h3>
+            {% for cand in Candidate.query.all() %}
+                {% if cand.id != candidate.id %}
+                <a href="{{ url_for('candidate_profile', candidate_id=cand.id) }}">{{ cand.name }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
