@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Создать кандидата</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Создание нового кандидата</h1>
+        <a href="/">← На главную</a>
+
+        <form method="POST" class="auth-form">
+            <div>
+                <label>Имя кандидата:</label>
+                <input type="text" name="name" required>
+            </div>
+            <div>
+                <label>Email кандидата:</label>
+                <input type="email" name="email" required>
+            </div>
+            <button type="submit">Создать кандидата</button>
+        </form>
+    </div>
+</body>
+</html>
