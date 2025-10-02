@@ -7,14 +7,14 @@
 <body>
     <div class="container">
         <h1>Выборы руководителя отдела</h1>
-        <p>Добро пожаловать, {{ user.username }}! {% if user.is_admin %}(АДМИНИСТРАТОР){% endif %} <a href="/logout">Выйти</a></p>
+        <p>Добро пожаловать, {{ user.username }}! {% if user.is_admin %}<span style="color: red; font-weight: bold;">(АДМИНИСТРАТОР)</span>{% endif %} <a href="/logout">Выйти</a></p>
 
         <div class="profile-links">
             <a href="{{ url_for('user_profile', user_id=user.id) }}">Мой профиль</a>
-            {% if is_admin %}
-            <a href="{{ url_for('users_list') }}">Все пользователи</a>
-            <a href="{{ url_for('register') }}">Создать пользователя</a>
-            <a href="{{ url_for('create_candidate') }}">Создать кандидата</a>
+            {% if user.is_admin %}
+            <a href="{{ url_for('users_list') }}" style="color: red; font-weight: bold;">📋 АДМИН: Все пользователи</a>
+            <a href="{{ url_for('register') }}" style="color: red; font-weight: bold;">👥 АДМИН: Создать пользователя</a>
+            <a href="{{ url_for('create_candidate') }}" style="color: red; font-weight: bold;">➕ АДМИН: Создать кандидата</a>
             {% endif %}
         </div>
 
@@ -38,7 +38,6 @@
         <div class="info-section">
             <h3>Информация о системе:</h3>
             <p>Для победы кандидату необходимо набрать 10 голосов.</p>
-            <p>Администраторы системы имеют расширенные права управления.</p>
         </div>
     </div>
 </body>
