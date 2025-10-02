@@ -22,22 +22,9 @@
             {% endif %}
         </div>
 
-        <div class="voters-list">
-            <h3>Проголосовали за этого кандидата:</h3>
-            <ul>
-                {% for voter in voters %}
-                <li>
-                    <a href="{{ url_for('user_profile', user_id=voter.id) }}">
-                        Пользователь {{ voter.id }}: {{ voter.username }}
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-
         <div class="navigation">
             <h3>Другие кандидаты:</h3>
-            {% for cand in Candidate.query.all() %}
+            {% for cand in candidates %}
                 {% if cand.id != candidate.id %}
                 <a href="{{ url_for('candidate_profile', candidate_id=cand.id) }}">{{ cand.name }}</a>
                 {% endif %}
