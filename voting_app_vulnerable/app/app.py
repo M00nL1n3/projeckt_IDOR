@@ -9,9 +9,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'secret_key_123'
 
 db.init_app(app)
-
-# Инициализация БД
 init_db(app)
+
+# Вспомогательная функция для проверки админа
+def is_admin():
+    if 'user_id' not in session:
+        return False
+    user = User.query.get(session['user_id'])
+    return user and user.is_admin
 
 # Главная страница
 @app.route('/')
@@ -22,34 +27,60 @@ def index():
     user = User.query.get(session['user_id'])
     candidates = Candidate.query.all()
     
-    # Проверяем победу Ивана Петрова
-    ivan = Candidate.query.filter_by(name="Иван Петров").first()
-    if ivan and ivan.votes >= 10:
-        return redirect(url_for('candidate_profile', candidate_id=ivan.id))
+    # Проверяем победу кандидата "Огурец от Копатыча"
+    cucumber = Candidate.query.filter_by(name="Огурец от Копатыча").first()
+    if cucumber and cucumber.votes >= 10:
+        return redirect(url_for('candidate_profile', candidate_id=cucumber.id))
     
     return render_template('index.html', 
                          user=user, 
-                         candidates=candidates)
+                         candidates=candidates,
+                         is_admin=is_admin())
 
-# Страница регистрации (ТОЛЬКО ДЛЯ СОЗДАНИЯ ОДНОГО ПОЛЬЗОВАТЕЛЯ)
+# Страница регистрации (ТОЛЬКО ДЛЯ АДМИНА)
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # Если уже есть зарегистрированные пользователи, запрещаем регистрацию
-    if User.query.count() >= 10:
-        return "Регистрация закрыта. Доступно только 10 пользователей.", 403
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Только админ может создавать пользователей
+    if not is_admin():
+        return "Доступ запрещен. Только администратор может создавать пользователей.", 403
     
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         email = request.form['email']
         
-        new_user = User(username=username, password=password, email=email)
+        new_user = User(username=username, password=password, email=email, created_by=session['user_id'])
         db.session.add(new_user)
         db.session.commit()
         
-        return redirect(url_for('login'))
+        return redirect(url_for('users_list'))
     
     return render_template('register.html')
+
+# Страница создания кандидата (ТОЛЬКО ДЛЯ АДМИНА)
+@app.route('/create_candidate', methods=['GET', 'POST'])
+def create_candidate():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Только админ может создавать кандидатов
+    if not is_admin():
+        return "Доступ запрещен. Только администратор может создавать кандидатов.", 403
+    
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        
+        new_candidate = Candidate(name=name, email=email, created_by=session['user_id'])
+        db.session.add(new_candidate)
+        db.session.commit()
+        
+        return redirect(url_for('index'))
+    
+    return render_template('create_candidate.html')
 
 # Страница входа
 @app.route('/login', methods=['GET', 'POST'])
@@ -68,19 +99,21 @@ def login():
     
     return render_template('login.html')
 
-# УЯЗВИМОСТЬ IDOR: Просмотр профиля пользователя
+# Просмотр профиля пользователя
 @app.route('/user/<int:user_id>')
 def user_profile(user_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # УЯЗВИМОСТЬ: Можно смотреть любой профиль по ID
+    current_user = User.query.get(session['user_id'])
     target_user = User.query.get_or_404(user_id)
+    
     return render_template('user_profile.html', 
                          user=target_user, 
-                         current_user_id=session['user_id'])
+                         current_user_id=session['user_id'],
+                         is_admin=is_admin())
 
-# УЯЗВИМОСТЬ IDOR: Просмотр профиля кандидата
+# Просмотр профиля кандидата
 @app.route('/candidate/<int:candidate_id>')
 def candidate_profile(candidate_id):
     if 'user_id' not in session:
@@ -92,18 +125,22 @@ def candidate_profile(candidate_id):
     return render_template('candidate_profile.html', 
                          candidate=candidate, 
                          voters=voters,
-                         current_user_id=session['user_id'])
+                         current_user_id=session['user_id'],
+                         is_admin=is_admin())
 
-# Функция для навигации по пользователям
+# Список всех пользователей (ТОЛЬКО ДЛЯ АДМИНА)
 @app.route('/users')
 def users_list():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
+    if not is_admin():
+        return "Доступ запрещен. Только администратор может просматривать список пользователей.", 403
+    
     all_users = User.query.order_by(User.id).all()
-    return render_template('users_list.html', users=all_users)
+    return render_template('users_list.html', users=all_users, is_admin=is_admin())
 
-# Голосование за кандидата (только для текущего пользователя)
+# Голосование за кандидата (только за себя)
 @app.route('/vote/<int:candidate_id>', methods=['POST'])
 def vote(candidate_id):
     if 'user_id' not in session:
@@ -132,14 +169,18 @@ def vote(candidate_id):
     check_winner()
     return redirect(url_for('index'))
 
-# УЯЗВИМОСТЬ IDOR: Отмена голоса (доступно из любого профиля!)
+# Отмена голоса (ТОЛЬКО АДМИН МОЖЕТ ОТМЕНЯТЬ ЧУЖИЕ ГОЛОСА)
 @app.route('/cancel_vote/<int:user_id>', methods=['POST'])
 def cancel_vote(user_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # УЯЗВИМОСТЬ: Нет проверки прав! Любой user_id можно отменить
+    current_user = User.query.get(session['user_id'])
     target_user = User.query.get_or_404(user_id)
+    
+    # Админ может отменять любые голоса, обычные пользователи - только свои
+    if not current_user.is_admin and current_user.id != user_id:
+        return "Доступ запрещен. Вы можете отменять только свой голос.", 403
     
     if target_user.voted_for:
         candidate = Candidate.query.get(target_user.voted_for)
@@ -156,18 +197,19 @@ def cancel_vote(user_id):
     
     return redirect(url_for('user_profile', user_id=user_id))
 
-# УЯЗВИМОСТЬ IDOR: Передать голос Ивану Петрову (доступно из любого профиля!)
-@app.route('/transfer_vote/<int:user_id>', methods=['POST'])
-def transfer_vote(user_id):
+# Передача голоса (ТОЛЬКО АДМИН МОЖЕТ ПЕРЕДАВАТЬ ЧУЖИЕ ГОЛОСА)
+@app.route('/transfer_vote/<int:user_id>/<int:candidate_id>', methods=['POST'])
+def transfer_vote(user_id, candidate_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # УЯЗВИМОСТЬ: Нет проверки прав! Любой user_id можно изменить
+    current_user = User.query.get(session['user_id'])
     target_user = User.query.get_or_404(user_id)
-    ivan = Candidate.query.filter_by(name="Иван Петров").first()
+    candidate = Candidate.query.get_or_404(candidate_id)
     
-    if not ivan:
-        return jsonify({'error': 'Кандидат не найден'}), 404
+    # Админ может передавать любые голоса, обычные пользователи - только свои
+    if not current_user.is_admin and current_user.id != user_id:
+        return "Доступ запрещен. Вы можете передавать только свой голос.", 403
     
     # Отменяем текущий голос если есть
     if target_user.voted_for:
@@ -175,13 +217,13 @@ def transfer_vote(user_id):
         if old_candidate:
             old_candidate.votes -= 1
     
-    # Голосуем за Ивана
-    ivan.votes += 1
-    target_user.voted_for = ivan.id
+    # Голосуем за указанного кандидата
+    candidate.votes += 1
+    target_user.voted_for = candidate.id
     target_user.vote_timestamp = datetime.utcnow()
     
     # Логируем
-    vote_log = VoteLog(user_id=target_user.id, candidate_id=ivan.id, action='vote')
+    vote_log = VoteLog(user_id=target_user.id, candidate_id=candidate.id, action='vote')
     db.session.add(vote_log)
     
     db.session.commit()
@@ -189,12 +231,12 @@ def transfer_vote(user_id):
     check_winner()
     return redirect(url_for('user_profile', user_id=user_id))
 
-# Проверка победы
+# Проверка победы "Огурца от Копатыча"
 def check_winner():
-    ivan = Candidate.query.filter_by(name="Иван Петров").first()
-    if ivan and ivan.votes >= 10:
-        # Генерируем флаг для Ивана
-        ivan.email = f"ivan@company.com - ФЛАГ: CTF{{ID0R_VULN_{ivan.votes}_{ivan.id}}}"
+    cucumber = Candidate.query.filter_by(name="Огурец от Копатыча").first()
+    if cucumber and cucumber.votes >= 10:
+        # Генерируем флаг для Огурца
+        cucumber.email = f"cucumber@kopatych.com - ФЛАГ: CTF{{IDOR_ADMIN_ACCESS_{cucumber.votes}}}"
         db.session.commit()
 
 @app.route('/logout')
