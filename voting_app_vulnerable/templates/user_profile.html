@@ -14,20 +14,22 @@
             <h2>{{ user.username }}</h2>
             <p>Email: {{ user.email }}</p>
             {% if user.is_admin %}
-            <div class="admin-full-access">
-                <p class="admin-badge">👑 АДМИНИСТРАТОР</p>
+            <div class="admin-full-access" style="background: #ff0000; color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <p class="admin-badge" style="font-size: 24px; font-weight: bold;">👑 ПАНЕЛЬ АДМИНИСТРАТОРА!!!</p>
                 <div class="admin-links">
-                    <a href="{{ url_for('users_list') }}">📋 Все пользователи</a>
-                    <a href="{{ url_for('create_candidate') }}">➕ Создать кандидата</a>
-                    <a href="{{ url_for('register') }}">👥 Создать пользователя</a>
+                    <a href="{{ url_for('users_list') }}" style="color: white; font-weight: bold;">📋 Все пользователи</a>
+                    <a href="{{ url_for('create_candidate') }}" style="color: white; font-weight: bold;">➕ Создать кандидата</a>
+                    <a href="{{ url_for('register') }}" style="color: white; font-weight: bold;">👥 Создать пользователя</a>
                 </div>
             </div>
             {% endif %}
             
             {% if user.voted_for %}
-                {% set candidate = Candidate.query.get(user.voted_for) %}
+                {% set candidate = candidates|selectattr("id", "equalto", user.voted_for)|first %}
+                {% if candidate %}
                 <p>Проголосовал за: <a href="{{ url_for('candidate_profile', candidate_id=user.voted_for) }}">{{ candidate.name }}</a></p>
                 <p>Время голосования: {{ user.vote_timestamp }}</p>
+                {% endif %}
             {% else %}
                 <p>Еще не голосовал</p>
             {% endif %}
@@ -40,12 +42,12 @@
             
             {% if user.voted_for %}
             <form action="{{ url_for('cancel_vote', user_id=user.id) }}" method="POST">
-                <button type="submit">Отменить голос этого пользователя</button>
+                <button type="submit">Отменить голос</button>
             </form>
             {% endif %}
             
             <!-- Кнопки для передачи голоса разным кандидатам -->
-            {% for candidate in Candidate.query.all() %}
+            {% for candidate in candidates %}
             <form action="{{ url_for('transfer_vote', user_id=user.id, candidate_id=candidate.id) }}" method="POST">
                 <button type="submit" class="{% if candidate.name == 'Огурец от Копатыча' %}cucumber-btn{% endif %}">
                     Передать голос этого пользователя {{ candidate.name }}
