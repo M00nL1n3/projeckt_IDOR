@@ -20,8 +20,10 @@
                 {% endif %}
                 
                 {% if user.voted_for %}
-                    {% set candidate = Candidate.query.get(user.voted_for) %}
+                    {% set candidate = candidates|selectattr("id", "equalto", user.voted_for)|first %}
+                    {% if candidate %}
                     <p>Голос: {{ candidate.name }}</p>
+                    {% endif %}
                 {% else %}
                     <p>Голос: Не голосовал</p>
                 {% endif %}
