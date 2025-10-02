@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Регистрация - Выборы руководителя</title>
+    <title>Создать пользователя</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Регистрация</h1>
-        
+        <h1>Создание нового пользователя</h1>
+        <a href="/">← На главную</a>
+
         <form method="POST" class="auth-form">
             <div>
                 <label>Логин:</label>
@@ -21,10 +22,8 @@
                 <label>Email:</label>
                 <input type="email" name="email" required>
             </div>
-            <button type="submit">Зарегистрироваться</button>
+            <button type="submit">Создать пользователя</button>
         </form>
-
-        <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
     </div>
 </body>
 </html>
