@@ -8,11 +8,21 @@
     <div class="container">
         <h1>Профиль пользователя</h1>
         <a href="/">← На главную</a>
+        {% if is_admin %}<a href="{{ url_for('users_list') }}">← К списку пользователей</a>{% endif %}
 
         <div class="profile-info">
             <h2>{{ user.username }}</h2>
             <p>Email: {{ user.email }}</p>
-            <p>ID пользователя: {{ user.id }}</p>
+            {% if user.is_admin %}
+            <div class="admin-full-access">
+                <p class="admin-badge">👑 АДМИНИСТРАТОР</p>
+                <div class="admin-links">
+                    <a href="{{ url_for('users_list') }}">📋 Все пользователи</a>
+                    <a href="{{ url_for('create_candidate') }}">➕ Создать кандидата</a>
+                    <a href="{{ url_for('register') }}">👥 Создать пользователя</a>
+                </div>
+            </div>
+            {% endif %}
             
             {% if user.voted_for %}
                 {% set candidate = Candidate.query.get(user.voted_for) %}
@@ -23,7 +33,8 @@
             {% endif %}
         </div>
 
-        <!-- УЯЗВИМОСТЬ: Эти действия доступны для ЛЮБОГО пользователя -->
+        <!-- Действия доступны только админу или самому пользователю -->
+        {% if user.is_admin or current_user_id == user.id %}
         <div class="admin-actions">
             <h3>Управление голосом:</h3>
             
@@ -33,19 +44,16 @@
             </form>
             {% endif %}
             
-            <form action="{{ url_for('transfer_vote', user_id=user.id) }}" method="POST">
-                <button type="submit">Передать голос этого пользователя Ивану Петрову</button>
+            <!-- Кнопки для передачи голоса разным кандидатам -->
+            {% for candidate in Candidate.query.all() %}
+            <form action="{{ url_for('transfer_vote', user_id=user.id, candidate_id=candidate.id) }}" method="POST">
+                <button type="submit" class="{% if candidate.name == 'Огурец от Копатыча' %}cucumber-btn{% endif %}">
+                    Передать голос этого пользователя {{ candidate.name }}
+                </button>
             </form>
-        </div>
-
-        <div class="navigation">
-            <h3>Перейти к другим пользователям:</h3>
-            {% for other_user in User.query.all() %}
-                {% if other_user.id != user.id %}
-                <a href="{{ url_for('user_profile', user_id=other_user.id) }}">Пользователь {{ other_user.id }}: {{ other_user.username }}</a>
-                {% endif %}
             {% endfor %}
         </div>
+        {% endif %}
     </div>
 </body>
 </html>
