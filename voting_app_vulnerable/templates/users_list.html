@@ -15,6 +15,9 @@
                 <h3><a href="{{ url_for('user_profile', user_id=user.id) }}">Пользователь {{ user.id }}</a></h3>
                 <p>Логин: {{ user.username }}</p>
                 <p>Email: {{ user.email }}</p>
+                {% if user.is_admin %}
+                <p class="admin-badge">👑 АДМИНИСТРАТОР</p>
+                {% endif %}
                 
                 {% if user.voted_for %}
                     {% set candidate = Candidate.query.get(user.voted_for) %}
