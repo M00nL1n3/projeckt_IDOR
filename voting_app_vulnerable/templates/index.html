@@ -7,11 +7,15 @@
 <body>
     <div class="container">
         <h1>Выборы руководителя отдела</h1>
-        <p>Добро пожаловать, {{ user.username }}! <a href="/logout">Выйти</a></p>
+        <p>Добро пожаловать, {{ user.username }}! {% if user.is_admin %}(АДМИНИСТРАТОР){% endif %} <a href="/logout">Выйти</a></p>
 
         <div class="profile-links">
             <a href="{{ url_for('user_profile', user_id=user.id) }}">Мой профиль</a>
+            {% if is_admin %}
             <a href="{{ url_for('users_list') }}">Все пользователи</a>
+            <a href="{{ url_for('register') }}">Создать пользователя</a>
+            <a href="{{ url_for('create_candidate') }}">Создать кандидата</a>
+            {% endif %}
         </div>
 
         <h2>Кандидаты:</h2>
@@ -31,22 +35,10 @@
             {% endfor %}
         </div>
 
-        <div class="exploit-hint">
-            <h3>Как эксплуатировать уязвимость:</h3>
-            <ol>
-                <li>Перейдите в <a href="{{ url_for('users_list') }}">список всех пользователей</a></li>
-                <li>Выберите любого пользователя и перейдите в его профиль</li>
-                <li>Нажмите "Передать голос этого пользователя Ивану Петрову"</li>
-                <li>Повторите для других пользователей</li>
-                <li>Когда Иван наберет 10 голосов, флаг появится в его <a href="{{ url_for('candidate_profile', candidate_id=1) }}">профиле</a></li>
-            </ol>
-
-            <div class="current-stats">
-                <h4>Текущая статистика:</h4>
-                <p>• Иван Петров: {{ candidates[0].votes }} голосов</p>
-                <p>• Мария Сидорова: {{ candidates[1].votes }} голосов</p>
-                <p>• Петр Иванов: {{ candidates[2].votes }} голосов</p>
-            </div>
+        <div class="info-section">
+            <h3>Информация о системе:</h3>
+            <p>Для победы кандидату необходимо набрать 10 голосов.</p>
+            <p>Администраторы системы имеют расширенные права управления.</p>
         </div>
     </div>
 </body>
